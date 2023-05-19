@@ -1,14 +1,6 @@
 import ImageEditor from "@react-native-community/image-editor";
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  Animated,
-  View,
-  Dimensions,
-  StyleSheet,
-  TouchableHighlight,
-  Text,
-  TouchableOpacity,
-} from "react-native";
+import React, { useState, useEffect } from "react";
+import { Animated, View, Dimensions, StyleSheet } from "react-native";
 import {
   State,
   PinchGestureHandler,
@@ -54,13 +46,16 @@ export type CropProps = {
   height?: number;
   maxZoom?: number;
   resizeMode?: "contain" | "cover";
+  onCrop: (
+    cropCallback: (quality?: number) => Promise<{
+      uri: string;
+      width: number;
+      height: number;
+    }>
+  ) => void;
 };
 
-export type CropHandle = {
-  cropImage: () => Promise<{ uri: string; height: number; width: number }>;
-};
-
-const Crop = React.forwardRef<CropHandle, CropProps>((props, ref) => {
+const Crop = (props: CropProps): JSX.Element => {
   const {
     source,
     cropShape = "circle",
@@ -73,6 +68,7 @@ const Crop = React.forwardRef<CropHandle, CropProps>((props, ref) => {
     borderWidth = 2,
     maxZoom = 5,
     resizeMode = "contain",
+    onCrop,
   } = props;
 
   cropArea.width = round(cropArea.width, 2);
@@ -128,24 +124,28 @@ const Crop = React.forwardRef<CropHandle, CropProps>((props, ref) => {
         computeCover(getValue(scale), imageSize, { width, height }, cropArea)
       );
     }
-
-    _lastScale = getValue(scale);
-
-    // reset translation
-    // translateX.setValue(0);
-    // translateY.setValue(0);
-    addScaleListener();
-    addTranslationListeners();
   };
 
   useEffect(() => {
     init();
+  }, []);
 
-    return () => {
-      removeScaleListeners();
-      removeTranslationListeners();
+  useEffect(() => {
+    const init = async () => {
+      const translateXValue = getValue(translateX);
+      const translateYValue = getValue(translateY);
+      setImageSize(await computeImageSize(source.uri));
+
+      // reset translation
+      _lastScale = getValue(scale);
+      translateX.setValue(translateXValue);
+      translateY.setValue(translateYValue);
+      addScaleListener();
+      addTranslationListeners();
+      onCrop(cropImage);
     };
-  });
+    init();
+  }, [trackScale]);
 
   // start: pinch gesture handler
 
@@ -155,10 +155,6 @@ const Crop = React.forwardRef<CropHandle, CropProps>((props, ref) => {
       useNativeDriver: false,
     }
   );
-
-  React.useImperativeHandle(ref, () => ({
-    cropImage: async () => await cropImage(),
-  }));
 
   const addScaleListener = () => {
     trackScale.addListener(({ value }: { value: number }) => {
@@ -277,7 +273,9 @@ const Crop = React.forwardRef<CropHandle, CropProps>((props, ref) => {
 
   // end: pan gesture handler
 
-  const cropImage = useCallback(async (quality: number = 1) => {
+  const cropImage = async (
+    quality: number = 1
+  ): Promise<{ uri: string; height: number; width: number }> => {
     assert(!isInRange(quality, 1, 0), "quality must be between 0 and 1");
 
     const scaleValue = getValue(scale);
@@ -332,13 +330,12 @@ const Crop = React.forwardRef<CropHandle, CropProps>((props, ref) => {
 
     try {
       const croppedImageUri = await ImageEditor.cropImage(source.uri, cropData);
-
       return { uri: croppedImageUri, ...emitSize };
     } catch (e) {
       console.error("Failed to crop image!");
       throw e;
     }
-  }, []);
+  };
 
   const borderRadius =
     cropShape === "circle" ? Math.max(cropArea.height, cropArea.width) : 0;
@@ -419,7 +416,7 @@ const Crop = React.forwardRef<CropHandle, CropProps>((props, ref) => {
       </PinchGestureHandler>
     </PanGestureHandler>
   );
-});
+};
 
 export default Crop;
 
