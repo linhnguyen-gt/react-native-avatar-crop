@@ -29,7 +29,11 @@ yarn add react-native-avatar-crop vemarav/react-native-image-editor react-native
 ## Usage
 
 ```jsx
+import { Crop, CropRef } from "react-native-avatar-crop";
+
 const component = (props) => {
+  const cropRef = useRef<CropRef>(null);
+
   const { uri, setUri } = useState("");
   let crop;
   const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -37,7 +41,7 @@ const component = (props) => {
   const cropImage = async () => {
     // crop accepts quality, default is 1
     // uri will have cropped image cache path
-    const { uri, width, height } = await crop(0.9);
+    const { uri, width, height } = await cropRef.current?.onCrop(0.9);
     setUri(uri);
   };
 
@@ -54,6 +58,7 @@ const component = (props) => {
         />
       ) : null}
       <Crop
+        ref={cropRef}
         source={props.uri}
         cropShape={"circle"} // rect || circle
         width={SCREEN_WIDTH} // default value
@@ -67,7 +72,6 @@ const component = (props) => {
         opacity={0.7} // between 0 and 1, default is 1
         maxZoom={3} // default 3
         resizeMode={"contain"} // default "cover"
-        onCrop={(cropCallback) => (crop = cropCallback)} // returns a function
       />
     </View>
   );
