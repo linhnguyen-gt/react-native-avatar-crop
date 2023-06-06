@@ -48,7 +48,7 @@ export type CropProps = {
   resizeMode?: "contain" | "cover";
 };
 
-export type CropRef = {
+type CropRef = {
   onCrop: (quality?: number) => Promise<{
     uri: string;
     width: number;
