@@ -1,34 +1,34 @@
 import ImageEditor from "@react-native-community/image-editor";
-import React, { useState, useEffect } from "react";
-import { Animated, View, Dimensions, StyleSheet } from "react-native";
-import {
-  State,
-  PinchGestureHandler,
-  PanGestureHandler,
-  GestureEvent,
-} from "react-native-gesture-handler";
 import MaskedView from "@react-native-masked-view/masked-view";
+import React from "react";
+import { Animated, Dimensions, StyleSheet, View } from "react-native";
+import {
+  GestureEvent,
+  PanGestureHandler,
+  PinchGestureHandler,
+  State,
+} from "react-native-gesture-handler";
 
 import {
   Size,
-  round,
   assert,
-  getValue,
-  getAlpha,
-  isInRange,
-  computeScale,
-  computeCover,
   computeContain,
-  translateRangeX,
+  computeCover,
   computeImageSize,
-  computeTranslation,
-  translateRangeY,
-  computeScaledWidth,
+  computeOffset,
+  computeScale,
   computeScaledHeight,
   computeScaledMultiplier,
-  computeTranslate,
-  computeOffset,
+  computeScaledWidth,
   computeSize,
+  computeTranslate,
+  computeTranslation,
+  getAlpha,
+  getValue,
+  isInRange,
+  round,
+  translateRangeX,
+  translateRangeY,
 } from "../utils";
 
 const { width: DEFAULT_WIDTH } = Dimensions.get("window");
@@ -46,16 +46,17 @@ export type CropProps = {
   height?: number;
   maxZoom?: number;
   resizeMode?: "contain" | "cover";
-  onCrop: (
-    cropCallback: (quality?: number) => Promise<{
-      uri: string;
-      width: number;
-      height: number;
-    }>
-  ) => void;
 };
 
-const Crop = (props: CropProps): JSX.Element => {
+export type CropRef = {
+  onCrop: (quality?: number) => Promise<{
+    uri: string;
+    width: number;
+    height: number;
+  }>;
+};
+
+const Crop = React.forwardRef<CropRef, CropProps>((props, ref) => {
   const {
     source,
     cropShape = "circle",
@@ -68,8 +69,11 @@ const Crop = (props: CropProps): JSX.Element => {
     borderWidth = 2,
     maxZoom = 5,
     resizeMode = "contain",
-    onCrop,
   } = props;
+
+  React.useImperativeHandle(ref, () => ({
+    onCrop: (quality?: number) => cropImage(quality),
+  }));
 
   cropArea.width = round(cropArea.width, 2);
   cropArea.height = round(cropArea.height, 2);
@@ -86,15 +90,15 @@ const Crop = (props: CropProps): JSX.Element => {
   let _lastTranslate = { x: 0, y: 0 };
 
   const trackScale = new Animated.Value(0);
-  const [scale] = useState(new Animated.Value(0));
+  const [scale] = React.useState(new Animated.Value(0));
 
-  const [trackTranslationX] = useState(new Animated.Value(0));
-  const [trackTranslationY] = useState(new Animated.Value(0));
+  const [trackTranslationX] = React.useState(new Animated.Value(0));
+  const [trackTranslationY] = React.useState(new Animated.Value(0));
 
-  const [translateX] = useState(new Animated.Value(0));
-  const [translateY] = useState(new Animated.Value(0));
+  const [translateX] = React.useState(new Animated.Value(0));
+  const [translateY] = React.useState(new Animated.Value(0));
 
-  const [minZoom, setMinZoom] = useState(1);
+  const [minZoom, setMinZoom] = React.useState(1);
 
   const imageSize = { width: NaN, height: NaN, rotation: 0 };
 
@@ -126,11 +130,11 @@ const Crop = (props: CropProps): JSX.Element => {
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     init();
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const init = async () => {
       const translateXValue = getValue(translateX);
       const translateYValue = getValue(translateY);
@@ -142,7 +146,6 @@ const Crop = (props: CropProps): JSX.Element => {
       translateY.setValue(translateYValue);
       addScaleListener();
       addTranslationListeners();
-      onCrop(cropImage);
     };
     init();
   }, [trackScale]);
@@ -348,11 +351,11 @@ const Crop = (props: CropProps): JSX.Element => {
       onHandlerStateChange={onPanGestureStateChange}
     >
       <PinchGestureHandler
-        minPointers={2}
         onGestureEvent={onPinchGestureEvent}
         onHandlerStateChange={onPinchGestureStateChange}
       >
         <View style={{ width, height, backgroundColor }}>
+          {/*@ts-ignore */}
           <MaskedView
             style={styles.mask}
             maskElement={
@@ -416,7 +419,7 @@ const Crop = (props: CropProps): JSX.Element => {
       </PinchGestureHandler>
     </PanGestureHandler>
   );
-};
+});
 
 export default Crop;
 
