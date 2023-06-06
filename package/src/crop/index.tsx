@@ -29,7 +29,7 @@ import {
   round,
   translateRangeX,
   translateRangeY,
-} from "react-native-avatar-crop/src/utils";
+} from "../utils";
 
 const { width: DEFAULT_WIDTH } = Dimensions.get("window");
 const DEFAULT_ANIM_DURATION = 180;
