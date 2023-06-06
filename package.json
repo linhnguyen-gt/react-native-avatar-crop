@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "eslint package --ext .js,.jsx,.ts,.tsx",
     "build": "rm -rf dist; tsc;"
   },
   "repository": {

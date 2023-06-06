@@ -29,7 +29,7 @@ import {
   round,
   translateRangeX,
   translateRangeY,
-} from "../utils";
+} from "react-native-avatar-crop/src/utils";
 
 const { width: DEFAULT_WIDTH } = Dimensions.get("window");
 const DEFAULT_ANIM_DURATION = 180;
@@ -48,7 +48,7 @@ export type CropProps = {
   resizeMode?: "contain" | "cover";
 };
 
-type CropRef = {
+export type CropRef = {
   onCrop: (quality?: number) => Promise<{
     uri: string;
     width: number;
